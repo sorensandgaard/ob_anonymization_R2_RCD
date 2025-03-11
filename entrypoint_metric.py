@@ -24,8 +24,8 @@ def run_metric(output_dir, name, case_pos, ctrl_pos):
     # content = f"RCD output:\n{a.stdout}\n"
     content = f"Not running anything as of yet - just testing the download"
 
-    cleanup_command = f"rm {script_R_file}"
-    a = subprocess.run(cleanup_command.split(),capture_output=True,text=True)
+    # cleanup_command = f"rm {script_R_file}"
+    # a = subprocess.run(cleanup_command.split(),capture_output=True,text=True)
 
     with open(log_file, 'w') as file:
         file.write(content)
