@@ -20,6 +20,15 @@ outdir <- args[3]
 case_obj <- readRDS(case_pos)
 ctrl_obj <- readRDS(ctrl_pos)
 
+# Read counts
+expr_orig <- ctrl_obj[["RNA"]]$counts
+expr_anon <- case_obj[["RNA"]]$counts
+rs_orig <- data.frame(rs_orig = rowSums(expr_orig)) %>% rownames_to_column(var = "gene")
+rs_anon <- data.frame(rs_anon = rowSums(expr_anon)) %>% rownames_to_column(var = "gene")
+out_rs_both <- inner_join(rs_orig,rs_anon,"gene") %>% 
+  mutate(rcd = rs_orig - rs_anon)
+rm(rs_orig,rs_anon)
+
 ## Cellcounts
 out_case_count <- length(colnames(case_obj))
 out_ctrl_count <- length(colnames(ctrl_obj))
@@ -34,10 +43,10 @@ case_obj <- subset(case_obj,cells=common_cells)
 expr_orig <- ctrl_obj[["RNA"]]$counts
 expr_anon <- case_obj[["RNA"]]$counts
 
-
 ## Mean absolute error
 expr_absdiff <- abs(expr_orig - expr_anon)
 out_MAE <- mean(expr_absdiff)
+row_MAE <- data.frame(MAE = rowMeans(expr_absdiff)) %>% rownames_to_column(var = "gene")
 
 ## Clustering with Aricode
 case_obj <- NormalizeData(case_obj) %>% 
@@ -70,8 +79,6 @@ out_df <- data.frame(
 )
 
 write.table(out_df,file = outdir)
-
-
 
 
 
