@@ -2,7 +2,6 @@
 library("tidyverse")
 library("Seurat")
 library("Matrix")
-library("aricode")
 
 rm(list=ls())
 
@@ -51,7 +50,7 @@ ctrl_obj <- subset(ctrl_obj,cells=common_cells)
 case_obj <- subset(case_obj,cells=common_cells)
 
 # Convert Seurat objects to expression matrices
-print("Converting seurat to expr matrix again, might be unnessesary")
+print("Converting subset seurat objects to expr matrix")
 expr_orig <- ctrl_obj[["RNA"]]$counts
 expr_anon <- case_obj[["RNA"]]$counts
 
@@ -61,40 +60,10 @@ expr_absdiff <- abs(expr_orig - expr_anon)
 out_MAE <- mean(expr_absdiff)
 row_MAE <- data.frame(MAE = rowMeans(expr_absdiff)) %>% rownames_to_column(var = "gene")
 
-## Clustering with Aricode
-print("Clustering with Aricode")
-case_obj <- NormalizeData(case_obj) %>% 
-  FindVariableFeatures() %>% 
-  ScaleData() %>% 
-  RunPCA() %>% 
-  FindNeighbors(dims = 1:10) %>% 
-  FindClusters(resolution = 0.5)
-ctrl_obj <- NormalizeData(ctrl_obj) %>% 
-  FindVariableFeatures() %>% 
-  ScaleData() %>% 
-  RunPCA() %>% 
-  FindNeighbors(dims = 1:10) %>% 
-  FindClusters(resolution = 0.5)
-
-
-print("Extracting clusters from seurat objects")
-ctrl_clusters <- FetchData(case_obj,vars = c("seurat_clusters")) %>% 
-  rownames_to_column(var = "cell")
-case_clusters <- FetchData(ctrl_obj,vars = c("seurat_clusters")) %>% 
-  rownames_to_column(var = "cell")
-
-print("Joining cluster dataframes")
-cluster_mat <- full_join(x = ctrl_clusters,
-                         y = case_clusters,
-                         by = "cell")
-
-print("Calculating adjusted rand index")
-out_ARI <- ARI(cluster_mat$seurat_clusters.x,cluster_mat$seurat_clusters.y)
-
 print("Creating out dataframe")
 out_df <- data.frame(
-  names = c("Control cell count","Anonymous cell count","Common cell count","Mean absolute error","Adjust rand index"),
-  values = c(out_ctrl_count,out_case_count,out_comm_count,out_MAE,out_ARI)
+  names = c("Control cell count","Anonymous cell count","Common cell count","Mean absolute error"),
+  values = c(out_ctrl_count,out_case_count,out_comm_count,out_MAE)
 )
 
 print("Writing outfile")
