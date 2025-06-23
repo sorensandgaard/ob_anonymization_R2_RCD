@@ -23,7 +23,7 @@ def run_metric(output_dir, name, case_pos, ctrl_pos):
     R_command = f"{wrapper_R} {script_R_file} {case_pos} {ctrl_pos} {outfile_pos}"
     content = f"R Command\n{R_command}\n\n"
     a = subprocess.run(R_command.split(),capture_output=True,text=True)
-    content = f"RCD output:\n{a.stdout}\n"
+    content += f"RCD output:\n{a.stdout}\n"
 
     # cleanup_command = f"rm {script_R_file}"
     # a = subprocess.run(cleanup_command.split(),capture_output=True,text=True)
