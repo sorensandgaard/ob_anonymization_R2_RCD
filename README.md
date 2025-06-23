@@ -1,2 +1,2 @@
-# ob_anonymization_R2_RCD
-Read Count Difference module for Anonymization evaluation
+# ob_anonymization_dataloss
+An Omnibenchmark of the information loss occurring during anonymization of RNA sequencing data. 

@@ -18,8 +18,9 @@ def run_metric(output_dir, name, case_pos, ctrl_pos):
     create_file(script_R_file,R_script_url)
 
     # Run R script
+    wrapper_R = f"envs/R_wrapper.sh"
     outfile_pos = f"{output_dir}/{name}.somefile.txt"
-    R_command = f"Rscript {script_R_file} {case_pos} {ctrl_pos} {outfile_pos}"
+    R_command = f"{wrapper_R} {script_R_file} {case_pos} {ctrl_pos} {outfile_pos}"
     a = subprocess.run(R_command.split(),capture_output=True,text=True)
     content = f"RCD output:\n{a.stdout}\n"
     # content = f"Not running anything as of yet - just testing the download"
