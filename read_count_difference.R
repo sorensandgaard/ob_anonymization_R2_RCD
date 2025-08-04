@@ -37,12 +37,14 @@ rm(rs_orig,rs_anon)
 
 ## Cellcounts
 print("Getting cellcounts")
-out_case_count <- length(colnames(case_obj))
-out_ctrl_count <- length(colnames(ctrl_obj))
+out_case_count <- ncol(case_obj)
+out_ctrl_count <- ncol(ctrl_obj)
 
 print("Getting common cells")
 common_cells <- intersect(colnames(case_obj),colnames(ctrl_obj))
 out_comm_count <- length(common_cells)
+unique_in_ctrl <- colnames(ctrl_obj)[!colnames(ctrl_obj) %in% common_cells]
+unique_in_anon <- colnames(case_obj)[!colnames(case_obj) %in% common_cells]
 
 ## Common cells
 print("Subset to common cells")
@@ -58,16 +60,58 @@ expr_anon <- case_obj[["RNA"]]$counts
 print("Calculating MAE")
 expr_absdiff <- abs(expr_orig - expr_anon)
 out_MAE <- mean(expr_absdiff)
-row_MAE <- data.frame(MAE = rowMeans(expr_absdiff)) %>% rownames_to_column(var = "gene")
+row_MAE <- data.frame(MAE = rowMeans(expr_absdiff)) %>% 
+  rownames_to_column(var = "gene")
+row_MAE_1pct <- quantile(row_MAE$MAE,probs = 0.99)
+row_MAE <-  row_MAE %>% 
+  arrange(desc(MAE)) %>% 
+  slice_head(n = 20)
 
-print("Creating out dataframe")
-out_df <- data.frame(
-  names = c("Control cell count","Anonymous cell count","Common cell count","Mean absolute error"),
-  values = c(out_ctrl_count,out_case_count,out_comm_count,out_MAE)
+cell_MAE <- data.frame(MAE = colMeans(expr_absdiff)) %>% 
+  rownames_to_column(var = "cell") 
+cell_MAE_1pct <- quantile(cell_MAE$MAE,probs = 0.99)
+cell_MAE <- cell_MAE %>% 
+  arrange(desc(MAE)) %>% 
+  slice_head(n = 20)
+
+# Format output
+json_obj <- list(
+  module = "R2_ReadCountDifference",
+  timestamp = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ"),
+  metrics = list(
+    total_cells = list(
+      ctrl = out_ctrl_count,
+      anon = out_case_count,
+      diff = out_case_count-out_ctrl_count,
+      in_common = out_comm_count,
+      unique_in_ctrl = unique_in_ctrl,
+      unique_in_anon = unique_in_anon
+    ),
+    mean_absolute_error = list(
+      overall = out_MAE,
+      gene_99th_percentile = row_MAE_1pct,
+      top_20_gene_values = row_MAE$MAE,
+      top_20_gene_names = row_MAE$gene,
+      cell_99th_percentile = cell_MAE_1pct,
+      top_20_cell_values = cell_MAE$MAE,
+      top_20_cell_names = cell_MAE$cell
+    ),
+    count_differences_genewise = list(
+      mean = mean(out_rs_both$rcd),
+      median = median(out_rs_both$rcd),
+      min = min(out_rs_both$rcd),
+      max = max(out_rs_both$rcd),
+      q25 = quantile(out_rs_both$rcd,probs = 0.25),
+      q75 = quantile(out_rs_both$rcd,probs = 0.75)
+    )
+  )
 )
 
-print("Writing outfile")
-write.table(out_df,file = outdir)
+# Save output
+write_json(json_obj, outdir, pretty = TRUE, auto_unbox = TRUE)
+
+
+
 
 
 
