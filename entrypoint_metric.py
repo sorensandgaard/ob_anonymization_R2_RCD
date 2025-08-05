@@ -19,7 +19,7 @@ def run_metric(output_dir, name, case_pos, ctrl_pos):
 
     # Run R script
     wrapper_R = f"envs/R_wrapper.sh"
-    outfile_pos = f"{output_dir}/{name}.somefile.txt"
+    outfile_pos = f"{output_dir}/{name}.somefile.json"
     R_command = f"{wrapper_R} {script_R_file} {case_pos} {ctrl_pos} {outfile_pos}"
     content = f"R Command\n{R_command}\n\n"
     a = subprocess.run(R_command.split(),capture_output=True,text=True)
